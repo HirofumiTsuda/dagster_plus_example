@@ -10,7 +10,7 @@ set ENABLED = True on a branch, open a PR to get a branch deployment, run the fo
 """
 import dagster as dg
 
-ENABLED = False
+ENABLED = True
 LAYERS = 20
 PER_LAYER = 50
 LAYERS_PER_JOB = 5
