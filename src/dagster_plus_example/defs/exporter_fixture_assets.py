@@ -1,6 +1,8 @@
 # Added for verifying the exporter on Dagster+: a dependency chain (so
 # staleStatus can become STALE) and a partitioned asset (issue #141).
-from dagster import AssetCheckResult, DailyPartitionsDefinition, asset, asset_check
+import time
+
+from dagster import AssetCheckResult, AssetCheckSeverity, DailyPartitionsDefinition, asset, asset_check
 
 
 @asset
@@ -34,3 +36,33 @@ def upstream_check_passes():
 @asset_check(asset=upstream_asset)
 def upstream_check_fails():
     return AssetCheckResult(passed=False, description="Intentional check failure for exporter testing")
+
+
+@asset(partitions_def=DailyPartitionsDefinition(start_date="2026-09-25"))
+def failing_partitioned():
+    raise RuntimeError("Intentional backfill failure for exporter testing")
+
+
+@asset(partitions_def=DailyPartitionsDefinition(start_date="2026-09-25"))
+def slow_partitioned():
+    time.sleep(120)
+
+
+@asset_check(asset=upstream_asset)
+def upstream_check_warns():
+    return AssetCheckResult(passed=False, severity=AssetCheckSeverity.WARN)
+
+
+@asset_check(asset=upstream_asset)
+def upstream_check_raises():
+    raise RuntimeError("Intentional check execution failure")
+
+
+@asset
+def never_materialized():
+    pass
+
+
+@asset_check(asset=never_materialized)
+def never_materialized_check():
+    return AssetCheckResult(passed=True)
