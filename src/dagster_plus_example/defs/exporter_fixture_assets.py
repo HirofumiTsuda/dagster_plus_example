@@ -1,6 +1,6 @@
 # Added for verifying the exporter on Dagster+: a dependency chain (so
 # staleStatus can become STALE) and a partitioned asset (issue #141).
-from dagster import DailyPartitionsDefinition, asset
+from dagster import AssetCheckResult, DailyPartitionsDefinition, asset, asset_check
 
 
 @asset
@@ -24,3 +24,13 @@ def partitioned_downstream(context):
 
 
 extra_assets = [upstream_asset, downstream_asset, partitioned_upstream, partitioned_downstream]
+
+
+@asset_check(asset=upstream_asset)
+def upstream_check_passes():
+    return AssetCheckResult(passed=True)
+
+
+@asset_check(asset=upstream_asset)
+def upstream_check_fails():
+    return AssetCheckResult(passed=False, description="Intentional check failure for exporter testing")
