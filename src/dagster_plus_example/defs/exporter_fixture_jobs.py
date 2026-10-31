@@ -154,3 +154,20 @@ def bad_asset():
 
 
 assets = [good_asset, bad_asset]
+
+
+@op
+def flaky_op(context):
+    """Fails on the first attempt only, so a run retry succeeds (exporter#224)."""
+    if context.run.tags.get("dagster/retry_number") is None:
+        raise RuntimeError("Intentional first-attempt failure for retry testing")
+
+
+@job(tags={"dagster/max_retries": "2"})
+def retry_flaky_job():
+    flaky_op()
+
+
+@job(tags={"dagster/max_retries": "2"})
+def retry_always_failing_job():
+    failing_op()
